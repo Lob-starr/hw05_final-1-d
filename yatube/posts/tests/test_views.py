@@ -66,11 +66,17 @@ class TaskPagesTests(TestCase):
                 'posts/index.html',
             reverse('posts:group_posts', kwargs={'slug': cls.group.slug}):
                 'posts/group_list.html',
-            reverse('posts:profile', kwargs={'username': cls.posts_test[0].author}):
+            reverse(
+                'posts:profile', kwargs={'username': cls.posts_test[0].author}
+            ):
                 'posts/profile.html',
-            reverse('posts:post_detail', kwargs={'post_id': cls.posts_test[0].id}):
+            reverse(
+                'posts:post_detail', kwargs={'post_id': cls.posts_test[0].id}
+            ):
                 'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': cls.posts_test[0].id}):
+            reverse(
+                'posts:post_edit', kwargs={'post_id': cls.posts_test[0].id}
+            ):
                 'posts/create_post.html',
             reverse('posts:post_create'):
                 'posts/create_post.html',
@@ -152,7 +158,9 @@ class TaskPagesTests(TestCase):
     def test_context_profile(self):
         """Проверка контекстов страницы profile."""
         response = self.authorized_client.get(
-            reverse('posts:profile', kwargs={'username': self.posts_test[0].author})
+            reverse(
+                'posts:profile', kwargs={'username': self.posts_test[0].author}
+            )
         )
         self.context_for_test(response, 'page_obj')
         self.assertEqual(response.context['author'], self.user)
@@ -160,7 +168,9 @@ class TaskPagesTests(TestCase):
     def test_context_post_detail(self):
         """Проверка контекстков страницы post_detail."""
         response = self.authorized_client.get(
-            reverse('posts:post_detail', kwargs={'post_id': self.posts_test[0].id})
+            reverse(
+                'posts:post_detail', kwargs={'post_id': self.posts_test[0].id}
+            )
         )
         object = response.context['post']
         self.assertEqual(object.id, self.posts_test[0].id)
@@ -259,7 +269,9 @@ class TaskPagesTests(TestCase):
     def test_follow(self):
         """Проверка подписки."""
         response = self.auth_client_follow.get(reverse('posts:follow_index'))
-        self.assertEqual(len(response.context['page_obj']), ZERO_FOR_FOLLOW_INDEX)
+        self.assertEqual(
+            len(response.context['page_obj']), ZERO_FOR_FOLLOW_INDEX
+        )
         self.auth_client_follow.get(
             reverse('posts:profile_follow', kwargs={'username': self.user})
         )
