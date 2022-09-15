@@ -95,5 +95,7 @@ class URLTests(TestCase):
         self.assertRedirects(response, '/auth/login/?next=/create/')
 
     def test_404_page(self):
+        """Проверка страницы 404."""
         response = self.client.get('/unknow_page/')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, 'core/404.html')

@@ -9,7 +9,8 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from mixer.backend.django import mixer
 
-from ..constants import COUNT_POST_FOR_TEST, LIMIT_POST, LIMIT_POST_FOR_TEST
+from ..constants import (COUNT_POST_FOR_TEST, LIMIT_POST, LIMIT_POST_FOR_TEST,
+                         ZERO_FOR_FOLLOW_INDEX)
 from ..models import Follow, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -38,9 +39,6 @@ class TaskPagesTests(TestCase):
             group=cls.group,
             text=mixer.RANDOM,
         )
-        cls.posts_test = Post.objects.filter(
-            group_id=cls.group.id
-        )[:LIMIT_POST]
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -60,16 +58,19 @@ class TaskPagesTests(TestCase):
             group=cls.group,
             image=cls.uploaded,
         )
+        cls.posts_test = Post.objects.filter(
+            group_id=cls.group.id
+        )[:LIMIT_POST]
         cls.templates_pages_names = {
             reverse('posts:index'):
                 'posts/index.html',
             reverse('posts:group_posts', kwargs={'slug': cls.group.slug}):
                 'posts/group_list.html',
-            reverse('posts:profile', kwargs={'username': cls.posts[0].author}):
+            reverse('posts:profile', kwargs={'username': cls.posts_test[0].author}):
                 'posts/profile.html',
-            reverse('posts:post_detail', kwargs={'post_id': cls.posts[0].id}):
+            reverse('posts:post_detail', kwargs={'post_id': cls.posts_test[0].id}):
                 'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': cls.posts[0].id}):
+            reverse('posts:post_edit', kwargs={'post_id': cls.posts_test[0].id}):
                 'posts/create_post.html',
             reverse('posts:post_create'):
                 'posts/create_post.html',
@@ -80,7 +81,7 @@ class TaskPagesTests(TestCase):
                 'posts:group_posts', kwargs={'slug': cls.group.slug},
             ),
             reverse(
-                'posts:profile', kwargs={'username': cls.posts[0].author},
+                'posts:profile', kwargs={'username': cls.posts_test[0].author},
             ),
         }
         cls.form_fields = {
@@ -100,6 +101,14 @@ class TaskPagesTests(TestCase):
         self.authorized_client.force_login(self.user)
         self.auth_client_follow = Client()
         self.auth_client_follow.force_login(self.user_for_follow)
+
+    def context_for_test(self, response, temp):
+        objects = list(response.context[temp])
+        self.assertEqual(objects[0], self.posts_test[0])
+        self.assertEqual(objects[0].author, self.posts_test[0].author)
+        self.assertEqual(objects[0].group, self.posts_test[0].group)
+        self.assertEqual(objects[0].text, self.posts_test[0].text)
+        self.assertEqual(objects[0].image, self.posts_test[0].image)
 
     def test_correct_templates(self):
         """Проверка на соответствии шаблона с адресом."""
@@ -128,43 +137,37 @@ class TaskPagesTests(TestCase):
                 )
 
     def test_context_index(self):
-        """Проверка контекста страницы index."""
+        """Проверка контекстов страницы index."""
         response = self.authorized_client.get(reverse('posts:index'))
-        objects = list(response.context['page_obj'])
-        self.assertEqual(objects[0], self.posts_test[0])
-        self.assertEqual(objects[0].image, self.post_with_image.image)
+        self.context_for_test(response, 'page_obj')
 
     def test_context_group_list(self):
-        """Проверка контекста страницы group_list."""
+        """Проверка контекстов страницы group_list."""
         response = self.authorized_client.get(
             reverse('posts:group_posts', kwargs={'slug': self.group.slug})
         )
-        objects = list(response.context['page_obj'])
-        self.assertEqual(objects[0].text, self.posts_test[0].text)
+        self.context_for_test(response, 'page_obj')
         self.assertEqual(response.context['group'], self.group)
-        self.assertEqual(objects[0].image, self.post_with_image.image)
 
     def test_context_profile(self):
-        """Проверка контекста страницы profile."""
+        """Проверка контекстов страницы profile."""
         response = self.authorized_client.get(
-            reverse('posts:profile', kwargs={'username': self.posts[0].author})
+            reverse('posts:profile', kwargs={'username': self.posts_test[0].author})
         )
-        objects = list(response.context['page_obj'])
+        self.context_for_test(response, 'page_obj')
         self.assertEqual(response.context['author'], self.user)
-        self.assertEqual(objects[0], self.posts_test[0])
-        self.assertEqual(objects[0].image, self.post_with_image.image)
 
     def test_context_post_detail(self):
-        """Проверка контекста страницы post_detail."""
+        """Проверка контекстков страницы post_detail."""
         response = self.authorized_client.get(
-            reverse('posts:post_detail', kwargs={'post_id': self.posts[0].id})
+            reverse('posts:post_detail', kwargs={'post_id': self.posts_test[0].id})
         )
         object = response.context['post']
-        self.assertEqual(object.id, self.posts[0].id)
-        self.assertEqual(object.author, self.posts[0].author)
-        self.assertEqual(object.group, self.posts[0].group)
-        self.assertEqual(object.text, self.posts[0].text)
-        self.assertEqual(object.image, self.posts[0].image)
+        self.assertEqual(object.id, self.posts_test[0].id)
+        self.assertEqual(object.author, self.posts_test[0].author)
+        self.assertEqual(object.group, self.posts_test[0].group)
+        self.assertEqual(object.text, self.posts_test[0].text)
+        self.assertEqual(object.image, self.posts_test[0].image)
 
     def test_new_post_in_need_pages(self):
         """Проверка новый пост попал на нужные страницы и на первой позиции."""
@@ -181,7 +184,7 @@ class TaskPagesTests(TestCase):
                 'posts:group_posts', kwargs={'slug': self.group.slug}
             ),
             reverse(
-                'posts:profile', kwargs={'username': self.posts[0].author}
+                'posts:profile', kwargs={'username': self.posts_test[0].author}
             ),
         ]
         for url in pages:
@@ -204,7 +207,7 @@ class TaskPagesTests(TestCase):
         )
         objects = response.context['page_obj']
         self.assertNotEqual(objects[0].group, self.group)
-        self.assertNotIn(new_post, self.posts)
+        self.assertNotIn(new_post, self.posts_test)
 
     def test_context_post_create(self):
         """Проверка контекста страницы post_create."""
@@ -218,7 +221,7 @@ class TaskPagesTests(TestCase):
     def test_context_post_edit(self):
         """Проверка контекста страницы post_edit."""
         reverse_url = reverse(
-            'posts:post_edit', kwargs={'post_id': self.posts[0].id}
+            'posts:post_edit', kwargs={'post_id': self.posts_test[0].id}
         )
         response = self.authorized_client.get(reverse_url)
         for value, expected in self.form_fields.items():
@@ -227,36 +230,9 @@ class TaskPagesTests(TestCase):
                 self.assertIsInstance(form_field, expected)
         self.assertEqual(
             response.context['post_id'],
-            self.posts[0].id
+            self.posts_test[0].id
         )
         self.assertEqual(response.context['is_edit'], True)
-
-    def test_post_with_image_in_DB(self):
-        """Проверка записи с картинкой в БД."""
-        self.assertTrue(
-            Post.objects.filter(
-                text='Пост с картинкой',
-                image='posts/small.gif',
-            ).exists()
-        )
-
-    def test_context_comment(self):
-        """Проверка контекста формы комментария."""
-        reverse_url = reverse(
-            'posts:add_comment', kwargs={'post_id': self.posts[0].id}
-        )
-        comment_form = {
-            'text': 'Тестовый комментарий',
-        }
-        response = self.authorized_client.post(
-            reverse_url,
-            data=comment_form,
-            follow=True,
-        )
-        self.assertEqual(
-            response.context['comments'][0].text,
-            comment_form['text']
-        )
 
     def test_cache(self):
         """Проверка кэша страницы Index."""
@@ -282,6 +258,8 @@ class TaskPagesTests(TestCase):
 
     def test_follow(self):
         """Проверка подписки."""
+        response = self.auth_client_follow.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response.context['page_obj']), ZERO_FOR_FOLLOW_INDEX)
         self.auth_client_follow.get(
             reverse('posts:profile_follow', kwargs={'username': self.user})
         )

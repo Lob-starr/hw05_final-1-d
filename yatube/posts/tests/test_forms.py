@@ -84,14 +84,7 @@ class PostFormTests(TestCase):
         self.assertEqual(post_upd[0].text, form_data['text'])
         self.assertEqual(post_upd[0].group.id, form_data['group'])
         self.assertEqual(post_upd[0].author, form_data['author'])
-        self.assertTrue(
-            Post.objects.filter(
-                text=form_data['text'],
-                group=form_data['group'],
-                author=form_data['author'],
-                image='posts/new_small.gif',
-            ).exists()
-        )
+        self.assertEqual(post_upd[0].image, 'posts/new_small.gif')
 
     def test_post_edit(self):
         """Проверка формы изменения записи и валидность."""
@@ -161,14 +154,12 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True,
         )
+        comment = Comment.objects.filter(post=self.post).last()
+        self.assertEqual(comment.text, form_data['text'])
+        self.assertEqual(comment.author, self.user)
         self.assertEqual(
             Comment.objects.count(),
             comment_count + 1
-        )
-        self.assertTrue(
-            Comment.objects.filter(
-                text=form_data['text'],
-            ).exists()
         )
         self.assertRedirects(
             response, reverse(

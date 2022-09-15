@@ -3,11 +3,11 @@
 {% load user_filters %}
    
 {% block title %}
-{% if is_edit %}
-Редактировать пост
-{% else %}
-Создать новый пост
-{% endif %}  
+  {% if is_edit %}
+    Редактировать пост
+  {% else %}
+    Создать новый пост
+  {% endif %}  
 {% endblock%}
 
 

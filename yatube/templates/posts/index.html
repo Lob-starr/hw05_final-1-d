@@ -6,7 +6,7 @@
   Последние обновления на сайте
 {% endblock %}
 
-
+{% cache 20 index_page %}
 {% block content %}
 {% include 'posts/includes/switcher.html' %} 
 
@@ -36,3 +36,4 @@
 
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}
+{% endcache %}

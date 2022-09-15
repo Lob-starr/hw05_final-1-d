@@ -81,20 +81,16 @@ def post_create(request):
     Передача формы создания сообщения в шаблон create_post.html.
     """
     template = 'posts/create_post.html'
-    if request.method == 'POST':
-        form = PostForm(
-            request.POST,
-            files=request.FILES or None,
-        )
+    form = PostForm(
+        request.POST or None,
+        files=request.FILES or None,
+    )
 
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
-            return redirect('posts:profile', post.author)
-
-        return render(request, template, {'form': form})
-    form = PostForm()
+    if form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+        return redirect('posts:profile', post.author)
 
     return render(request, template, {'form': form})
 
@@ -150,6 +146,7 @@ def follow_index(request):
     context = {
         'page_obj': page_obj,
     }
+
     return render(request, 'posts/follow.html', context)
 
 
@@ -159,6 +156,7 @@ def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
     if author != request.user:
         Follow.objects.get_or_create(user=request.user, author=author)
+
     return redirect('posts:follow_index')
 
 
@@ -166,6 +164,6 @@ def profile_follow(request, username):
 def profile_unfollow(request, username):
     """Передача инфы о отписке."""
     author = get_object_or_404(User, username=username)
-    if author != request.user:
-        Follow.objects.get(user=request.user, author=author).delete()
+    Follow.objects.filter(user=request.user, author=author).delete()
+
     return redirect('posts:follow_index')

@@ -16,6 +16,10 @@ class Group(models.Model):
     slug = models.SlugField(unique=True, verbose_name='Адрес группы')
     description = models.TextField(verbose_name='Описание')
 
+    class Meta:
+        verbose_name = ('Группа')
+        verbose_name_plural = ('Группы')
+
     def __str__(self):
         return self.title
 
@@ -24,7 +28,9 @@ class Post(models.Model):
     """
     text - запись сообщения
     pub_date - дата публикации
-    author - автор поста.
+    author - автор поста
+    group - группа поста
+    image - картинка к посту.
     """
     text = models.TextField(
         verbose_name='Текст поста',
@@ -57,12 +63,20 @@ class Post(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
+        verbose_name = ('Пост')
+        verbose_name_plural = ('Посты')
 
     def __str__(self):
         return self.text[:LIMIT_SYMBOL]
 
 
 class Comment(models.Model):
+    """
+    post - пост, к которому относятся комментария
+    author - автор сообщения
+    text - текст комментария
+    created - дата создания.
+    """
     post = models.ForeignKey(
         Post,
         blank=True,
@@ -88,12 +102,18 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['-created']
+        verbose_name = ('Коммент')
+        verbose_name_plural = ('Комменты')
 
     def __str__(self):
         return self.text[:LIMIT_SYMBOL]
 
 
 class Follow(models.Model):
+    """
+    user - подписчик
+    author - автор поста
+    """
     user = models.ForeignKey(
         User,
         related_name='follower',
@@ -104,3 +124,13 @@ class Follow(models.Model):
         related_name='following',
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        verbose_name = ('Подписка')
+        verbose_name_plural = ('Подписки')
+        constraints =( 
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_user_author'
+            ),
+        )
