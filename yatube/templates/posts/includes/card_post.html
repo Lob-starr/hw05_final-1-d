@@ -1,5 +1,6 @@
 {% load thumbnail %}
 
+{% for post in page_obj %}
 <article>
   <ul>
     <li>
@@ -14,8 +15,10 @@
     <img class="card-img my-2" src="{{ im.url }}">
   {% endthumbnail %}
   <p>{{ post.text|linebreaks }}</p>
-  <a href="{% url 'posts:post_detail' post.pk %}">подробная информация </a>
+  <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
   {% if post.group %}  
       <p><a href="{% url 'posts:group_posts' post.group.slug %}">все записи группы</a></p>
   {% endif %}
 </article>
+{% if not forloop.last %}<hr>{% endif %}
+{% endfor %}

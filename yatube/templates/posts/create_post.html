@@ -23,7 +23,8 @@
                 Создать новый пост
                 {% endif %}           
               </div>
-              <div class="card-body">        
+              <div class="card-body">  
+                {% include 'includes/form_error.html' %}      
                 <form method="post" enctype="multipart/form-data" action=
                 "{% if is_edit %}
                   {% url 'posts:post_edit' post_id %}
@@ -32,30 +33,7 @@
                 {% endif %}"
                 >
                 {% csrf_token %}  
-                {% for field in form %}
-            <div class="form-group row my-3"
-              {% if field.field.required %} 
-                aria-required="true"
-              {% else %}
-                aria-required="false"
-              {% endif %}
-            
-              <label for="{{ field.id_for_label }}">
-                {{ field.label }}
-                  {% if field.field.required %}
-                    <span class="required text-danger">*</span>
-                  {% endif %}
-              </label>
-              <div>
-              {{ field|addclass:'form-control' }}
-                {% if field.help_text %}
-                  <small id="{{ field.id_for_label }}-help" class="form-text text-muted">
-                    {{ field.help_text|safe }}
-                  </small>
-                {% endif %}
-              </div>
-            </div>
-              {% endfor %}
+                {% include 'includes/form.html' %}
                   <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
                         {% if is_edit %}
