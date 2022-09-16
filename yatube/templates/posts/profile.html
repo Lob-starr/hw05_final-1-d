@@ -7,7 +7,7 @@
 
 {% block content %}       
   <h1>Все посты пользователя {{ author.username }}</h1>
-  <h4>Всего постов: {{ post.count }}</h4>
+  <h4>Всего постов: {{ author.posts.count }}</h4>
   <h4>Подписчиков: {{ author.following.count }}</h4>
   <h4>Подписан: {{ author.follower.count }}</h4>
   <br />

@@ -146,6 +146,9 @@ class PostFormTests(TestCase):
     def test_add_comment(self):
         """Проверка создания комментарий."""
         comment_count = Comment.objects.count()
+        comments_before_posting = list(
+            Comment.objects.values_list('id', flat=True)
+        )
         form_data = {
             'text': 'Тестовый комментарий'
         }
@@ -154,9 +157,10 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True,
         )
-        comment = Comment.objects.filter(post=self.post).last()
-        self.assertEqual(comment.text, form_data['text'])
-        self.assertEqual(comment.author, self.user)
+        comment_upd = Comment.objects.exclude(id__in=comments_before_posting)
+        self.assertTrue(comment_upd)
+        self.assertEqual(comment_upd[0].text, form_data['text'])
+        self.assertEqual(comment_upd[0].author, self.user)
         self.assertEqual(
             Comment.objects.count(),
             comment_count + 1

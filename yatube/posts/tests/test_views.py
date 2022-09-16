@@ -9,8 +9,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from mixer.backend.django import mixer
 
-from ..constants import (COUNT_POST_FOR_TEST, LIMIT_POST, LIMIT_POST_FOR_TEST,
-                         ZERO_FOR_FOLLOW_INDEX)
+from ..constants import COUNT_POST_FOR_TEST, LIMIT_POST, LIMIT_POST_FOR_TEST
 from ..models import Follow, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -108,13 +107,12 @@ class TaskPagesTests(TestCase):
         self.auth_client_follow = Client()
         self.auth_client_follow.force_login(self.user_for_follow)
 
-    def context_for_test(self, response, temp):
-        objects = list(response.context[temp])
-        self.assertEqual(objects[0], self.posts_test[0])
-        self.assertEqual(objects[0].author, self.posts_test[0].author)
-        self.assertEqual(objects[0].group, self.posts_test[0].group)
-        self.assertEqual(objects[0].text, self.posts_test[0].text)
-        self.assertEqual(objects[0].image, self.posts_test[0].image)
+    def context_for_test(self, object):
+        self.assertEqual(object, self.posts_test[0])
+        self.assertEqual(object.author, self.posts_test[0].author)
+        self.assertEqual(object.group, self.posts_test[0].group)
+        self.assertEqual(object.text, self.posts_test[0].text)
+        self.assertEqual(object.image, self.posts_test[0].image)
 
     def test_correct_templates(self):
         """Проверка на соответствии шаблона с адресом."""
@@ -145,14 +143,14 @@ class TaskPagesTests(TestCase):
     def test_context_index(self):
         """Проверка контекстов страницы index."""
         response = self.authorized_client.get(reverse('posts:index'))
-        self.context_for_test(response, 'page_obj')
+        self.context_for_test(response.context['page_obj'][0])
 
     def test_context_group_list(self):
         """Проверка контекстов страницы group_list."""
         response = self.authorized_client.get(
             reverse('posts:group_posts', kwargs={'slug': self.group.slug})
         )
-        self.context_for_test(response, 'page_obj')
+        self.context_for_test(response.context['page_obj'][0])
         self.assertEqual(response.context['group'], self.group)
 
     def test_context_profile(self):
@@ -162,8 +160,9 @@ class TaskPagesTests(TestCase):
                 'posts:profile', kwargs={'username': self.posts_test[0].author}
             )
         )
-        self.context_for_test(response, 'page_obj')
+        self.context_for_test(response.context['page_obj'][0])
         self.assertEqual(response.context['author'], self.user)
+        self.assertIn(response.context['following'], (True, False))
 
     def test_context_post_detail(self):
         """Проверка контекстков страницы post_detail."""
@@ -173,11 +172,8 @@ class TaskPagesTests(TestCase):
             )
         )
         object = response.context['post']
+        self.context_for_test(object)
         self.assertEqual(object.id, self.posts_test[0].id)
-        self.assertEqual(object.author, self.posts_test[0].author)
-        self.assertEqual(object.group, self.posts_test[0].group)
-        self.assertEqual(object.text, self.posts_test[0].text)
-        self.assertEqual(object.image, self.posts_test[0].image)
 
     def test_new_post_in_need_pages(self):
         """Проверка новый пост попал на нужные страницы и на первой позиции."""
@@ -268,10 +264,11 @@ class TaskPagesTests(TestCase):
 
     def test_follow(self):
         """Проверка подписки."""
-        response = self.auth_client_follow.get(reverse('posts:follow_index'))
-        self.assertEqual(
-            len(response.context['page_obj']), ZERO_FOR_FOLLOW_INDEX
-        )
+        self.auth_client_follow.get(reverse('posts:follow_index'))
+        self.assertFalse(Follow.objects.filter(
+            user=self.user_for_follow,
+            author=self.user
+        ).exists())
         self.auth_client_follow.get(
             reverse('posts:profile_follow', kwargs={'username': self.user})
         )

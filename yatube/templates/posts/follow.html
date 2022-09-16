@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}
+Избранные авторы
+{% endblock %}
 
 {% block content %}
   {% include 'posts/includes/switcher.html' %}
   <div class="container py-5">
-    <h1>{{ title }}</h1>
     {% for post in page_obj %}
     {% include 'posts/includes/card_post.html' %}
       {% if not forloop.last %}

@@ -1,5 +1,6 @@
 {% load thumbnail %}
 
+
 <article>
   <ul>
     <li>
@@ -15,7 +16,11 @@
   {% endthumbnail %}
   <p>{{ post.text|linebreaks }}</p>
   <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
-  {% if post.group %}  
-      <p><a href="{% url 'posts:group_posts' post.group.slug %}">все записи группы</a></p>
-  {% endif %}
+  {% with request.resolver_match.view_name as view_name %}
+    {% if view_name != 'posts:group_posts' %}
+      {% if post.group %}  
+        <p><a href="{% url 'posts:group_posts' post.group.slug %}">все записи группы</a></p>
+      {% endif %}
+    {% endif %}
+  {% endwith %}
 </article>
