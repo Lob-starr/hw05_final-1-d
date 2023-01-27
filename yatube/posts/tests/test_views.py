@@ -238,7 +238,7 @@ class TaskPagesTests(TestCase):
             response.context['post_id'],
             self.posts_test[0].id
         )
-        self.assertEqual(response.context['is_edit'], True)
+        self.assertTrue(response.context['is_edit'])
 
     def test_cache(self):
         """Проверка кэша страницы Index."""
@@ -264,7 +264,6 @@ class TaskPagesTests(TestCase):
 
     def test_follow(self):
         """Проверка подписки."""
-        self.auth_client_follow.get(reverse('posts:follow_index'))
         self.assertFalse(Follow.objects.filter(
             user=self.user_for_follow,
             author=self.user
